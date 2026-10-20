@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Drill to Earth’s Core Script — Auto-Drill, Ore ESP & Depth Teleport</title>
+<meta name="description" content="Drill to Earth’s Core script for Windows 10/11: auto-drill, ore ESP, depth teleport, auto-upgrade and a fast reset loop. Free and open source." />
+<style>
+  :root{
+    --bg-0:#070a18;
+    --bg-1:#0c1130;
+    --bg-2:#131a3f;
+    --ink:#e8ecff;
+    --ink-dim:#a3acd6;
+    --ink-faint:#6f7aa8;
+    --accent:#5b8cff;
+    --accent-2:#a55bff;
+    --accent-3:#38e0c8;
+    --card:#0f1533;
+    --stroke:rgba(140,160,255,.16);
+    --stroke-strong:rgba(140,160,255,.32);
+    --radius:16px;
+    --max:1140px;
+  }
+
+  *{box-sizing:border-box;}
+
+  html,body{margin:0;padding:0;}
+
+  body{
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(1100px 600px at 12% -10%, rgba(91,140,255,.22), transparent 60%),
+      radial-gradient(900px 620px at 92% 0%, rgba(165,91,255,.18), transparent 62%),
+      radial-gradient(1200px 800px at 50% 110%, rgba(56,224,200,.10), transparent 65%),
+      linear-gradient(170deg, var(--bg-0) 0%, var(--bg-1) 45%, var(--bg-2) 100%);
+    background-attachment:fixed;
+    min-height:100vh;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  a{color:inherit;text-decoration:none;}
+
+  .wrap{
+    width:100%;
+    max-width:var(--max);
+    margin:0 auto;
+    padding:0 24px;
+  }
+
+  /* ---------- NAV ---------- */
+  .nav-shell{
+    position:sticky;
+    top:0;
+    z-index:50;
+    padding:14px 0;
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    background:linear-gradient(180deg, rgba(10,14,34,.78), rgba(10,14,34,.55));
+    border-bottom:1px solid var(--stroke);
+  }
+
+  .nav{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+  }
+
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-weight:800;
+    letter-spacing:.2px;
+    font-size:1.02rem;
+    white-space:nowrap;
+  }
+
+  .brand-mark{
+    width:30px;height:30px;
+    border-radius:9px;
+    display:grid;place-items:center;
+    font-size:15px;
+    background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    box-shadow:0 6px 20px rgba(91,140,255,.38);
+  }
+
+  .brand span b{
+    background:linear-gradient(90deg,#8fb2ff,#c79bff);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+
+  .nav-links{
+    display:flex;
+    align-items:center;
+    gap:26px;
+    font-size:.92rem;
+    color:var(--ink-dim);
+  }
+
+  .nav-links a{
+    transition:color .18s ease;
+    position:relative;
+  }
+
+  .nav-links a:hover{color:#fff;}
+
+  .nav-links a::after{
+    content:"";
+    position:absolute;
+    left:0;bottom:-6px;
+    width:0;height:2px;
+    border-radius:2px;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    transition:width .22s ease;
+  }
+
+  .nav-links a:hover::after{width:100%;}
+
+  .btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:9px;
+    font-weight:700;
+    font-size:.94rem;
+    border-radius:12px;
+    padding:12px 22px;
+    border:1px solid transparent;
+    cursor:pointer;
+    transition:transform .18s ease, box-shadow .22s ease, background .22s ease, border-color .22s ease;
+    white-space:nowrap;
+  }
+
+  .btn:active{transform:translateY(1px);}
+
+  .btn-primary{
+    background:linear-gradient(135deg,var(--accent) 0%, var(--accent-2) 100%);
+    color:#fff;
+    box-shadow:0 10px 26px rgba(91,140,255,.34);
+  }
+
+  .btn-primary:hover{
+    transform:translateY(-2px);
+    box-shadow:0 16px 36px rgba(126,110,255,.48);
+  }
+
+  .btn-ghost{
+    background:rgba(255,255,255,.035);
+    border-color:var(--stroke-strong);
+    color:var(--ink);
+  }
+
+  .btn-ghost:hover{
+    background:rgba(255,255,255,.08);
+    border-color:rgba(160,180,255,.55);
+    transform:translateY(-2px);
+  }
+
+  .nav .btn{padding:10px 18px;font-size:.88rem;}
+
+  /* ---------- HERO ---------- */
+  .hero{
+    padding:84px 0 66px;
+    text-align:center;
+    position:relative;
+  }
+
+  .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    padding:7px 16px;
+    border-radius:999px;
+    font-size:.8rem;
+    font-weight:600;
+    letter-spacing:.4px;
+    color:#c8d4ff;
+    background:rgba(91,140,255,.09);
+    border:1px solid rgba(120,150,255,.32);
+    box-shadow:inset 0 0 22px rgba(91,140,255,.10);
+    margin-bottom:26px;
+  }
+
+  .dot{
+    width:7px;height:7px;border-radius:50%;
+    background:var(--accent-3);
+    box-shadow:0 0 0 4px rgba(56,224,200,.16);
+    animation:pulse 2.4s ease-in-out infinite;
+  }
+
+  @keyframes pulse{
+    0%,100%{opacity:1;transform:scale(1);}
+    50%{opacity:.45;transform:scale(.82);}
+  }
+
+  .hero h1{
+    margin:0 auto;
+    max-width:900px;
+    font-size:clamp(2.15rem, 5.6vw, 4rem);
+    line-height:1.08;
+    letter-spacing:-1.4px;
+    font-weight:800;
+    background:linear-gradient(100deg,#ffffff 0%, #9db9ff 38%, #c79bff 68%, #7ff3e2 100%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+
+  .hero p.lede{
+    max-width:660px;
+    margin:24px auto 0;
+    color:var(--ink-dim);
+    font-size:1.06rem;
+  }
+
+  .hero-actions{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    margin-top:36px;
+  }
+
+  .hero-actions .btn{padding:15px 28px;font-size:1rem;}
+
+  .stats{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:14px;
+    margin:52px auto 0;
+    max-width:900px;
+  }
+
+  .chip{
+    padding:18px 14px;
+    border-radius:14px;
+    background:rgba(255,255,255,.032);
+    border:1px solid var(--stroke);
+    backdrop-filter:blur(6px);
+    transition:border-color .2s ease, transform .2s ease, background .2s ease;
+  }
+
+  .chip:hover{
+    transform:translateY(-3px);
+    border-color:var(--stroke-strong);
+    background:rgba(255,255,255,.055);
+  }
+
+  .chip .value{
+    display:block;
+    font-size:1.28rem;
+    font-weight:800;
+    letter-spacing:-.4px;
+    background:linear-gradient(90deg,#cfe0ff,#b39bff);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+
+  .chip .label{
+    display:block;
+    margin-top:3px;
+    font-size:.76rem;
+    text-transform:uppercase;
+    letter-spacing:1.1px;
+    color:var(--ink-faint);
+    font-weight:600;
+  }
+
+  /* ---------- SECTION HEADERS ---------- */
+  section{padding:74px 0;}
+
+  .sec-head{
+    text-align:center;
+    max-width:640px;
+    margin:0 auto 46px;
+  }
+
+  .eyebrow{
+    display:inline-block;
+    font-size:.75rem;
+    font-weight:700;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:#8ea8ff;
+    margin-bottom:12px;
+  }
+
+  .sec-head h2{
+    margin:0;
+    font-size:clamp(1.6rem,3.4vw,2.35rem);
+    letter-spacing:-.8px;
+    font-weight:800;
+    color:#f2f5ff;
+  }
+
+  .sec-head p{
+    margin:14px 0 0;
+    color:var(--ink-dim);
+    font-size:.98rem;
+  }
+
+  /* ---------- FEATURES ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:20px;
+  }
+
+  .card{
+    position:relative;
+    padding:28px 24px 26px;
+    border-radius:var(--radius);
+    background:linear-gradient(180deg, rgba(23,30,64,.82), rgba(13,18,42,.82));
+    border:1px solid var(--stroke);
+    overflow:hidden;
+    transition:transform .24s ease, border-color .24s ease, box-shadow .24s ease;
+  }
+
+  .card::before{
+    content:"";
+    position:absolute;
+    top:0;left:0;right:0;
+    height:3px;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2),var(--accent-3));
+    opacity:.9;
+  }
+
+  .card:hover{
+    transform:translateY(-7px);
+    border-color:rgba(150,170,255,.42);
+    box-shadow:0 22px 44px -18px rgba(60,90,220,.55);
+  }
+
+  .card .icon{
+    width:46px;height:46px;
+    display:grid;place-items:center;
+    font-size:22px;
+    border-radius:12px;
+    background:rgba(91,140,255,.12);
+    border:1px solid rgba(120,150,255,.24);
+    margin-bottom:18px;
+  }
+
+  .card h3{
+    margin:0 0 8px;
+    font-size:1.04rem;
+    font-weight:700;
+    letter-spacing:-.2px;
+    color:#eef2ff;
+  }
+
+  .card p{
+    margin:0;
+    font-size:.9rem;
+    color:var(--ink-dim);
+    line-height:1.62;
+  }
+
+  /* ---------- HOW IT WORKS ---------- */
+  .steps{
+    position:relative;
+    max-width:760px;
+    margin:0 auto;
+    padding-left:8px;
+  }
+
+  .steps::before{
+    content:"";
+    position:absolute;
+    left:31px;
+    top:16px;
+    bottom:16px;
+    width:2px;
+    border-radius:2px;
+    background:linear-gradient(180deg,var(--accent),var(--accent-2) 55%,var(--accent-3));
+    opacity:.55;
+  }
+
+  .step{
+    position:relative;
+    display:flex;
+    gap:22px;
+    padding:0 0 36px;
+  }
+
+  .step:last-child{padding-bottom:0;}
+
+  .step-num{
+    flex:0 0 auto;
+    width:48px;height:48px;
+    border-radius:50%;
+    display:grid;place-items:center;
+    font-weight:800;
+    font-size:1rem;
+    color:#fff;
+    background:linear-gradient(135deg,#1b2450,#242f68);
+    border:1px solid rgba(140,165,255,.4);
+    box-shadow:0 0 0 6px rgba(12,17,48,.9), 0 10px 24px -8px rgba(91,140,255,.6);
+    z-index:1;
+  }
+
+  .step-body{
+    padding-top:6px;
+  }
+
+  .step-body h3{
+    margin:0 0 6px;
+    font-size:1.05rem;
+    font-weight:700;
+    letter-spacing:-.2px;
+  }
+
+  .step-body p{
+    margin:0;
+    color:var(--ink-dim);
+    font-size:.93rem;
+    max-width:560px;
+  }
+
+  /* ---------- FAQ ---------- */
+  .faq{
+    max-width:780px;
+    margin:0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+
+  details{
+    border-radius:14px;
+    background:rgba(255,255,255,.032);
+    border:1px solid var(--stroke);
+    overflow:hidden;
+    transition:border-color .2s ease, background .2s ease;
+  }
+
+  details[open]{
+    border-color:rgba(140,165,255,.42);
+    background:rgba(255,255,255,.055);
+  }
+
+  summary{
+    list-style:none;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+    padding:18px 22px;
+    font-weight:650;
+    font-size:.98rem;
+    color:#e9eeff;
+    user-select:none;
+  }
+
+  summary::-webkit-details-marker{display:none;}
+
+  .plus{
+    flex:0 0 auto;
+    position:relative;
+    width:20px;height:20px;
+    transition:transform .28s ease;
+  }
+
+  .plus::before,
+  .plus::after{
+    content:"";
+    position:absolute;
+    background:linear-gradient(90deg,#9db9ff,#c79bff);
+    border-radius:2px;
+    top:50%;left:50%;
+  }
+
+  .plus::before{
+    width:14px;height:2px;
+    transform:translate(-50%,-50%);
+  }
+
+  .plus::after{
+    width:2px;height:14px;
+    transform:translate(-50%,-50%);
+  }
+
+  details[open] .plus{transform:rotate(45deg);}
+
+  .faq-a{
+    padding:0 22px 20px;
+    color:var(--ink-dim);
+    font-size:.92rem;
+    line-height:1.68;
+    max-width:640px;
+  }
+
+  /* ---------- CTA BANNER ---------- */
+  .cta-banner{
+    position:relative;
+    border-radius:22px;
+    padding:56px 34px;
+    text-align:center;
+    overflow:hidden;
+    border:1px solid rgba(140,165,255,.3);
+    background:linear-gradient(150deg, rgba(28,38,84,.92), rgba(16,21,50,.94));
+  }
+
+  .cta-banner::before{
+    content:"";
+    position:absolute;
+    width:640px;height:640px;
+    left:50%;top:50%;
+    transform:translate(-50%,-50%);
+    background:radial-gradient(circle, rgba(110,120,255,.42) 0%, rgba(165,91,255,.18) 38%, transparent 68%);
+    pointer-events:none;
+  }
+
+  .cta-banner > *{position:relative;z-index:1;}
+
+  .cta-banner h2{
+    margin:0;
+    font-size:clamp(1.5rem,3.4vw,2.2rem);
+    font-weight:800;
+    letter-spacing:-.8px;
+    background:linear-gradient(100deg,#ffffff,#b7c8ff 55%,#c79bff);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+
+  .cta-banner p{
+    margin:14px auto 0;
+    max-width:520px;
+    color:var(--ink-dim);
+    font-size:.98rem;
+  }
+
+  .cta-banner .btn{
+    margin-top:30px;
+    padding:15px 32px;
+    font-size:1rem;
+  }
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    border-top:1px solid var(--stroke);
+    padding:30px 0 40px;
+    background:rgba(6,9,24,.6);
+  }
+
+  .foot{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:16px;
+    flex-wrap:wrap;
+    font-size:.86rem;
+    color:var(--ink-faint);
+  }
+
+  .foot a{
+    color:#a9bcff;
+    font-weight:600;
+    transition:color .18s ease;
+  }
+
+  .foot a:hover{color:#fff;}
+
+  .foot .sep{opacity:.4;margin:0 8px;}
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width:960px){
+    .grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .stats{grid-template-columns:repeat(2,minmax(0,1fr));}
+  }
+
+  @media (max-width:640px){
+    .wrap{padding:0 18px;}
+
+    .nav-links{display:none;}
+
+    .nav{padding:0;}
+
+    .brand{font-size:.95rem;}
+
+    .nav .btn{padding:9px 14px;font-size:.82rem;}
+
+    .hero{padding:56px 0 48px;}
+
+    .hero p.lede{font-size:.97rem;}
+
+    .hero-actions{flex-direction:column;align-items:stretch;}
+
+    .hero-actions .btn{width:100%;}
+
+    .stats{grid-template-columns:1fr;gap:12px;margin-top:38px;}
+
+    .grid{grid-template-columns:1fr;gap:16px;}
+
+    section{padding:56px 0;}
+
+    .steps::before{left:23px;}
+
+    .step{gap:16px;}
+
+    .step-num{width:38px;height:38px;font-size:.9rem;}
+
+    .cta-banner{padding:42px 22px;}
+
+    .foot{flex-direction:column;align-items:flex-start;}
+  }
+</style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <div class="nav-shell">
+    <div class="wrap">
+      <nav class="nav" aria-label="Main navigation">
+        <a class="brand" href="#top">
+          <span class="brand-mark" aria-hidden="true">⛏️</span>
+          <span>drill-to-core<b>-macro</b></span>
+        </a>
+        <div class="nav-links">
+          <a href="#features">Features</a>
+          <a href="#how">How it works</a>
+          <a href="#faq">FAQ</a>
+        </div>
+        <a class="btn btn-primary" href="https://gitscore.cc" target="_blank" rel="noopener noreferrer">Download</a>
+      </nav>
+    </div>
+  </div>
+
+  <main id="top">
+
+    <!-- HERO -->
+    <header class="hero">
+      <div class="wrap">
+        <span class="pill"><span class="dot" aria-hidden="true"></span> Drill to Earth’s Core Script</span>
+        <h1>Drill to Earth’s Core Script — Auto-Drill, Ore ESP &amp; Depth Teleport</h1>
+        <p class="lede">
+          A lightweight Windows macro built for the Drill to Earth’s Core experience. Auto-drill continuously,
+          highlight nearby ores with ESP, teleport between depths, auto-upgrade your rig and run a fast reset loop
+          without touching the mouse.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://gitscore.cc" target="_blank" rel="noopener noreferrer">⬇ Download for Windows</a>
+          <a class="btn btn-ghost" href="https://gitscore.cc" target="_blank" rel="noopener noreferrer">★ View on GitHub</a>
+        </div>
+
+        <div class="stats">
+          <div class="chip">
+            <span class="value">48,200+</span>
+            <span class="label">Downloads</span>
+          </div>
+          <div class="chip">
+            <span class="value">v2.4.1</span>
+            <span class="label">Latest version</span>
+          </div>
+          <div class="chip">
+            <span class="value">Windows 10 / 11</span>
+            <span class="label">Platform</span>
+          </div>
+          <div class="chip">
+            <span class="value">Free &amp; open source</span>
+            <span class="label">License</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- FEATURES -->
+    <section id="features">
+      <div class="wrap">
+        <div class="sec-head">
+          <span class="eyebrow">Features</span>
+          <h2>Everything the drill-to-core-macro handles for you</h2>
+          <p>Six focused modules that automate the grind while keeping you in control of every toggle.</p>
+        </div>
+
+        <div class="grid">
+          <article class="card">
+            <div class="icon" aria-hidden="true">⛏️</div>
+            <h3>Auto-Drill</h3>
+            <p>Keeps the drill running nonstop, re-engages blocks instantly and never stalls on a missed click, so depth keeps climbing while you are away.</p>
+          </article>
+
+          <article class="card">
+            <div class="icon" aria-hidden="true">💎</div>
+            <h3>Ore ESP</h3>
+            <p>Highlights valuable ore veins through rock with colour-coded markers and distance labels, so you always know what is worth digging toward.</p>
+          </article>
+
+          <article class="card">
+            <div class="icon" aria-hidden="true">🌀</div>
+            <h3>Depth Teleport</h3>
+            <p>Jump instantly to saved depths or your deepest checkpoint. Skip the slow descent and resume drilling exactly where the good ore starts.</p>
+          </article>
+
+          <article class="card">
+            <div class="icon" aria-hidden="true">⚙️</div>
+            <h3>Auto-Upgrade</h3>
+            <p>Spends currency on the best available drill, speed and yield upgrades the moment they become affordable, with a priority order you can tune.</p>
+          </article>
+
+          <article class="card">
+            <div class="icon" aria-hidden="true">🔁</div>
+            <h3>Fast Reset Loop</h3>
+            <p>Automates the reset cycle — cash out, restart, re-upgrade and dive again — with configurable delays so every run is faster than the last.</p>
+          </article>
+
+          <article class="card">
+            <div class="icon" aria-hidden="true">🪟</div>
+            <h3>Native Windows App</h3>
+            <p>Runs as a compact Windows 10/11 overlay with hotkeys, per-module toggles and a live status readout. No browser tab, no heavy install.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how">
+      <div class="wrap">
+        <div class="sec-head">
+          <span class="eyebrow">How it works</span>
+          <h2>From download to deep core in three steps</h2>
+          <p>No complicated setup — the macro is ready to drill within a minute of unzipping.</p>
+        </div>
+
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h3>Download &amp; launch</h3>
+              <p>Grab the latest build from gitscore.cc, extract the archive and run the executable. Windows 10 and 11 are supported out of the box — no dependencies to install.</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h3>Pick your modules</h3>
+              <p>Toggle auto-drill, ore ESP, depth teleport, auto-upgrade and the reset loop from the overlay. Set hotkeys and upgrade priorities the way you like them.</p>
+            </div>
+          </div>
+
+          <div class="step">
